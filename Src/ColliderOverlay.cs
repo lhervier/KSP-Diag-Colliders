@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace com.github.lhervier.ksp.terrainprecisionfixdiag5
+namespace com.github.lhervier.ksp.diag.colliders
 {
     /// <summary>
     /// The drawing of one collider of a static, as lines: the edges of a box, three circles for a sphere,
@@ -72,7 +72,7 @@ namespace com.github.lhervier.ksp.terrainprecisionfixdiag5
         public ColliderOverlay(Collider collider)
         {
             Collider = collider;
-            mesh = new Mesh { name = "TerrainPrecisionFixDiag5 collider " + collider.name };
+            mesh = new Mesh { name = "KSPDiagColliders collider " + collider.name };
         }
 
         /// <summary>

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace com.github.lhervier.ksp.terrainprecisionfixdiag5
+namespace com.github.lhervier.ksp.diag.colliders
 {
     /// <summary>
     /// The drawing of the collider of one terrain quad: the outline of each cell of its grid. Stock gives
@@ -30,7 +30,7 @@ namespace com.github.lhervier.ksp.terrainprecisionfixdiag5
         public GroundOverlay(PQ quad)
         {
             Quad = quad;
-            mesh = new Mesh { name = "TerrainPrecisionFixDiag5 ground of " + quad.name };
+            mesh = new Mesh { name = "KSPDiagColliders ground of " + quad.name };
             mesh.MarkDynamic();
         }
 

@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyName>TerrainPrecisionFixDiag5Mod</AssemblyName>
-    <RootNamespace>com.github.lhervier.ksp.terrainprecisionfixdiag5</RootNamespace>
+    <AssemblyName>KSPDiagColliders</AssemblyName>
+    <RootNamespace>com.github.lhervier.ksp.diag.colliders</RootNamespace>
     <OutputType>Library</OutputType>
     <OutputPath>Output\bin</OutputPath>
     <IntermediateOutputPath>Output\obj</IntermediateOutputPath>

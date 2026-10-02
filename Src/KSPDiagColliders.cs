@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace com.github.lhervier.ksp.terrainprecisionfixdiag5
+namespace com.github.lhervier.ksp.diag.colliders
 {
     /// <summary>
     /// Collider viewer. In flight, draws the colliders within a few hundred metres of the active vessel:
@@ -17,9 +17,9 @@ namespace com.github.lhervier.ksp.terrainprecisionfixdiag5
     /// colour and a box that stops drawing it. The log names each collider the first time it is drawn.
     /// </summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public class TerrainPrecisionFixDiag5Mod : MonoBehaviour
+    public class KSPDiagColliders : MonoBehaviour
     {
-        private const string LOG_PREFIX = "[TerrainPrecisionFixDiag5] ";
+        private const string LOG_PREFIX = "[KSPDiagColliders] ";
 
         // Unity's own shader for its debug lines: unlike the unlit shaders of the game, it lets a script
         // choose the depth test.
@@ -75,7 +75,7 @@ namespace com.github.lhervier.ksp.terrainprecisionfixdiag5
         private Material disabledLine;
 
         // The window: its id, distinct from those of the other Diags, its width, and its gap from the
-        // right and top edges of the screen, where the windows of Diag 2 and Diag 3 do not open.
+        // right and top edges of the screen, where the windows of Diag TerrainHeight and Diag FloatingOrigin do not open.
         private const int WINDOW_ID = 0x47485005;
         private const float WINDOW_WIDTH = 360f;
         private const float WINDOW_MARGIN = 60f;
@@ -230,7 +230,7 @@ namespace com.github.lhervier.ksp.terrainprecisionfixdiag5
         private void OnGUI()
         {
             GUI.skin = HighLogic.Skin;
-            windowRect = GUILayout.Window(WINDOW_ID, windowRect, DrawWindow, "Terrain Precision Fix Diag 5");
+            windowRect = GUILayout.Window(WINDOW_ID, windowRect, DrawWindow, "KSP Diag - Colliders");
         }
 
         private void DrawWindow(int id)

@@ -1,4 +1,4 @@
-# Terrain Precision Fix - Diagnostic Mod 5
+# KSP Diag - Colliders
 
 **⚠️ Work in progress.** This is an active investigation, not a finished mod. The code and this page can still change, and several questions are still open.
 
@@ -99,7 +99,7 @@ is convex or unreadable.
 
 ## The log
 
-Every line starts with `[TerrainPrecisionFixDiag5]`. The mod writes:
+Every line starts with `[Diag-Colliders]`. The mod writes:
 
 - the shader it draws with, the body, and each change of mode or layer;
 - **each collider of statics, the first time it is drawn**: its full path in the hierarchy, its type,
@@ -109,21 +109,21 @@ Every line starts with `[TerrainPrecisionFixDiag5]`. The mod writes:
 
 ## Get it
 
-Either way you end up with the same `GameData/TerrainPrecisionFixDiag5Mod/` folder.
+Either way you end up with the same `GameData/KSPDiagColliders/` folder.
 
 **Download it** — from the assets of the
-[latest release](https://github.com/lhervier/KSP-TerrainPrecisionFixDiag5/releases/latest).
+[latest release](https://github.com/lhervier/KSP-Diag-Colliders/releases/latest).
 
 **Or compile it** — clone this repository, set `KSPDIR` to your KSP install folder and run
 `build.bat`. It needs the .NET SDK, takes a few seconds, reads the KSP assemblies straight from your
-install, and puts the DLL in `GameData/TerrainPrecisionFixDiag5Mod/` inside the repository. It does
+install, and puts the DLL in `GameData/KSPDiagColliders/` inside the repository. It does
 not install anything. Worth doing if you would rather not run a binary you have no source for while
 reporting what you saw.
 
 ## Install
 
-Drop `GameData/TerrainPrecisionFixDiag5Mod` into the `GameData` of KSP, so that you end up with
-`GameData/TerrainPrecisionFixDiag5Mod/TerrainPrecisionFixDiag5Mod.dll`. It runs on a stock install:
+Drop `GameData/KSPDiagColliders` into the `GameData` of KSP, so that you end up with
+`GameData/KSPDiagColliders/KSPDiagColliders.dll`. It runs on a stock install:
 no Harmony, no ModuleManager, no dependency of any kind.
 
 The window is there in every flight. The mod reads the colliders and writes nothing but its lines in
