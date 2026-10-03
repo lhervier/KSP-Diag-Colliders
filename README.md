@@ -67,7 +67,8 @@ times a second.
 
 *The same place and camera as above, with* Through everything *chosen in the window.*
 
-The window opens at the top right of the screen and can be dragged. There is no key.
+The window opens at the top right of the screen and can be dragged. `Alt+F6` hides it, and shows it again;
+the colliders stay drawn.
 
 - **Three modes.** *Hidden by what stands in front*, the default: a collider standing proud of a surface
   shows, one beneath it does not. *Through everything*: every collider drawn on top of the scene, to see
