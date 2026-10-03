@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -14,7 +16,9 @@ namespace com.github.lhervier.ksp.diag.colliders
     /// but for the parts of the active vessel. By default what stands in front of the drawing hides it, so
     /// that a collider standing proud of a surface shows and one beneath it does not. The window switches
     /// between that, drawn through everything, and nothing, and lists the colliders drawn, each with its
-    /// colour and a box that stops drawing it. The log names each collider the first time it is drawn.
+    /// colour and a box that stops drawing it. The log names each collider the first time it is drawn. A
+    /// button of the window also logs, under every loaded craft, each collider of the ground and the statics
+    /// a ray going straight down meets, with its height above the terrain the game computes there.
     /// </summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class KSPDiagColliders : MonoBehaviour
@@ -303,8 +307,90 @@ namespace com.github.lhervier.ksp.diag.colliders
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndScrollView();
+            if (GUILayout.Button("Log the colliders under each craft"))
+            {
+                LogUnderCrafts();
+            }
             GUILayout.EndVertical();
             GUI.DragWindow();
+        }
+
+        // The ray under a craft starts this high above the terrain the game computes there, and goes twice
+        // as far down: the deck of a runway stands a few metres above that terrain.
+        private const double PROBE_HEIGHT = 50.0;
+
+        // Layer 15, Local Scenery: the terrain quads and the statics.
+        private const int PROBE_LAYERS = 1 << 15;
+
+        /// <summary>
+        /// Writes to the log, for every loaded craft, every collider of the ground and the statics a ray
+        /// fired straight down under it meets, nearest first: its name, its parent's, its height above the
+        /// terrain the game computes there in millimetres, and whether its game object is active. Returns
+        /// the same, ready to be written as JSON.
+        /// </summary>
+        internal List<object> LogUnderCrafts()
+        {
+            List<object> crafts = new List<object>();
+            foreach (Vessel vessel in FlightGlobals.VesselsLoaded)
+            {
+                CelestialBody body = vessel.mainBody;
+                if (body == null || body.pqsController == null)
+                {
+                    continue;
+                }
+                double lat = vessel.latitude;
+                double lon = vessel.longitude;
+                double terrain = body.pqsController.GetSurfaceHeight(body.GetRelSurfaceNVector(lat, lon))
+                    - body.pqsController.radius;
+                Vector3d origin = body.GetWorldSurfacePosition(lat, lon, terrain + PROBE_HEIGHT);
+                Vector3d down = (body.position - origin).normalized;
+                RaycastHit[] hits = Physics.RaycastAll((Vector3)origin, (Vector3)down, (float)(2.0 * PROBE_HEIGHT),
+                    PROBE_LAYERS, QueryTriggerInteraction.Ignore);
+                System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+                StringBuilder line = new StringBuilder();
+                line.AppendFormat(CultureInfo.InvariantCulture, "under '{0}' {1} lat={2:F6} lon={3:F6}:",
+                    vessel.vesselName, vessel.situation, lat, lon);
+                List<object> colliders = new List<object>();
+                foreach (RaycastHit hit in hits)
+                {
+                    double heightMm = (body.GetAltitude(hit.point) - terrain) * 1000.0;
+                    Transform parent = hit.collider.transform.parent;
+                    string parentName = parent != null ? parent.name : "";
+                    bool active = hit.collider.gameObject.activeInHierarchy;
+                    line.AppendFormat(CultureInfo.InvariantCulture, " [{0} ({1}) {2:F3} mm, active={3}]",
+                        hit.collider.name, parentName, heightMm, active);
+                    colliders.Add(new Dictionary<string, object>
+                    {
+                        { "name", hit.collider.name },
+                        { "parent", parentName },
+                        { "heightMm", heightMm },
+                        { "active", active }
+                    });
+                }
+                if (hits.Length == 0)
+                {
+                    line.Append(" no collider");
+                }
+                Debug.Log(LOG_PREFIX + line);
+                crafts.Add(new Dictionary<string, object>
+                {
+                    { "craft", vessel.vesselName },
+                    { "id", vessel.id.ToString() },
+                    { "situation", vessel.situation.ToString() },
+                    { "latitude", lat },
+                    { "longitude", lon },
+                    { "colliders", colliders }
+                });
+            }
+            return crafts;
+        }
+
+        /// <summary>Where the window is on the screen, and how big.</summary>
+        internal Rect WindowRect
+        {
+            get { return windowRect; }
+            set { windowRect = value; }
         }
 
         // Mod+F6 shows or hides the window, the same key for every KSP Diag. Static: the choice holds from one

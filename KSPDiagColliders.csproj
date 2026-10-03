@@ -20,10 +20,16 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <!-- Stock KSP only: no Harmony, no third party assembly. The whole point of this mod is that a
-         tester can run it on an otherwise untouched install. -->
+    <!-- Stock KSP only: no Harmony. The whole point of this mod is that a tester can run it on an
+         otherwise untouched install. -->
     <Reference Include="Assembly-CSharp">
       <HintPath>$(KSP_DATA_DIR)\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- KSP-MCPServer, for the attribute that marks the tools this mod offers it. Only the server reads
+         it: without the server installed, this mod runs the same. -->
+    <Reference Include="KSPMCPServer">
+      <HintPath>$(KSP_DATA_DIR)\..\GameData\KSPMCPServer\KSPMCPServer.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="System" />

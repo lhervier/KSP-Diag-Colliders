@@ -100,13 +100,18 @@ is convex or unreadable.
 
 ## The log
 
-Every line starts with `[Diag-Colliders]`. The mod writes:
+Every line starts with `[KSPDiagColliders]`. The mod writes:
 
 - the shader it draws with, the body, and each change of mode or layer;
 - **each collider of statics, the first time it is drawn**: its full path in the hierarchy, its type,
   whether it is on or switched off, its layer, whether it is convex or unreadable, and how far its centre
   stands from the active craft — the drawing alone does not say which object is which colour;
-- at most once a second, when they change, how many ground quads and colliders of statics are drawn.
+- at most once a second, when they change, how many ground quads and colliders of statics are drawn;
+- **on the window's button *Log the colliders under each craft***, one line per loaded craft: every
+  collider of the ground and the statics that a ray fired straight down under the craft meets, nearest
+  first, with the object it hangs from, its height above the terrain the game computes there, and whether
+  it is active. On a runway, that tells the deck from the ground under it, and a section of the deck from
+  another.
 
 ## Get it
 
