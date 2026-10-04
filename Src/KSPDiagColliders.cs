@@ -398,6 +398,13 @@ namespace com.github.lhervier.ksp.diag.colliders
         private static readonly KeyBinding WINDOW_KEY = new KeyBinding(KeyCode.F6);
         private static bool windowVisible = true;
 
+        /// <summary>Whether the window shows, as Mod+F6 toggles it; the measures go on either way.</summary>
+        internal static bool WindowVisible
+        {
+            get { return windowVisible; }
+            set { windowVisible = value; }
+        }
+
         private void Update()
         {
             if (GameSettings.MODIFIER_KEY.GetKey() && WINDOW_KEY.GetKeyDown())

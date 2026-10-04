@@ -42,6 +42,15 @@ namespace com.github.lhervier.ksp.diag.colliders
             };
         }
 
+        [McpTool("colliders_show_window",
+            "Shows or hides the window of KSP Diag - Colliders, as Mod+F6 does; what it measures goes on either " +
+            "way. Returns whether it shows (visible).")]
+        internal static object ShowWindow(bool visible)
+        {
+            KSPDiagColliders.WindowVisible = visible;
+            return new Dictionary<string, object> { { "visible", KSPDiagColliders.WindowVisible } };
+        }
+
         private static KSPDiagColliders Mod()
         {
             KSPDiagColliders mod = UnityEngine.Object.FindObjectOfType<KSPDiagColliders>();
