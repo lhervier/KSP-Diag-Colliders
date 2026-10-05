@@ -3,3 +3,4 @@ obj/
 GameData/KSPDiagColliders/*.dll
 GameData/KSPDiagColliders/*.zip
 CLAUDE.md
+__pycache__/
