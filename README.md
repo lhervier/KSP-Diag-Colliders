@@ -11,7 +11,7 @@ you see. A small window chooses how they are drawn and lists them by name.
 It was written to look at the runway of the space centre, where a craft can rest above the deck or sink
 into it: what it shows there, and why, is in
 [Terrain Precision Fix](https://github.com/lhervier/KSP-TerrainPrecisionFix), in
-[Real Solar System: the runway fix](https://github.com/lhervier/KSP-TerrainPrecisionFix/blob/master/docs/limits-and-solutions/rss/the-runway-fix.md).
+[Real Solar System: the runway fix](https://github.com/lhervier/KSP-TerrainPrecisionFix/blob/main/docs/limits-and-solutions/rss/the-runway-fix.md).
 This mod only shows.
 
 **How this was made.** Written with Claude, Anthropic's AI assistant, and reviewed line by line by a
