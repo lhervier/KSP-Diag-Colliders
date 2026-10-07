@@ -51,6 +51,15 @@ namespace com.github.lhervier.ksp.diag.colliders
             return new Dictionary<string, object> { { "visible", KSPDiagColliders.WindowVisible } };
         }
 
+        [McpTool("colliders_set_display",
+            "Chooses how KSP Diag - Colliders draws the colliders, as clicking one of the three modes of its window " +
+            "does: 0 Hidden by what stands in front (the default), 1 Through everything, 2 Off. What it measures " +
+            "goes on in every mode. Returns the mode now chosen (display).")]
+        internal static object SetDisplay(double mode)
+        {
+            return new Dictionary<string, object> { { "display", Mod().ChooseDisplay((int)mode) } };
+        }
+
         private static KSPDiagColliders Mod()
         {
             KSPDiagColliders mod = UnityEngine.Object.FindObjectOfType<KSPDiagColliders>();

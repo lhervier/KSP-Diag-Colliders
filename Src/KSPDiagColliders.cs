@@ -245,13 +245,7 @@ namespace com.github.lhervier.ksp.diag.colliders
         {
             GUILayout.BeginVertical();
             GUILayout.Label("Colliders within " + RADIUS.ToString("F0") + " m:");
-            Display chosen = (Display)GUILayout.SelectionGrid((int)display, DISPLAY_LABELS, 1);
-            if (chosen != display)
-            {
-                display = chosen;
-                ApplyDepthTest();
-                Debug.Log(LOG_PREFIX + "display: " + Describe(display));
-            }
+            ChooseDisplay(GUILayout.SelectionGrid((int)display, DISPLAY_LABELS, 1));
             GUILayout.BeginHorizontal();
             // The name takes all the width the buttons leave, so that they stay at the right edge whatever
             // its length, under the pointer of a user clicking through the layers.
@@ -384,6 +378,26 @@ namespace com.github.lhervier.ksp.diag.colliders
                 });
             }
             return crafts;
+        }
+
+        /// <summary>
+        /// Chooses a display mode, as a click on its label in the window does: its index in the window, from
+        /// the top. Returns the label of the mode now chosen.
+        /// </summary>
+        internal string ChooseDisplay(int index)
+        {
+            if (index < 0 || index >= DISPLAY_LABELS.Length)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(index), "0 to " + (DISPLAY_LABELS.Length - 1));
+            }
+            Display chosen = (Display)index;
+            if (chosen != display)
+            {
+                display = chosen;
+                ApplyDepthTest();
+                Debug.Log(LOG_PREFIX + "display: " + Describe(display));
+            }
+            return DISPLAY_LABELS[index];
         }
 
         /// <summary>Where the window is on the screen, and how big.</summary>
