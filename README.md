@@ -8,12 +8,6 @@ the statics (the buildings and runway of the space centre, Kerbal Konstructs gro
 its own. It draws them where the physics has them, which is not always where the game draws the surface
 you see. A small window chooses how they are drawn and lists them by name.
 
-It was written to look at the runway of the space centre, where a craft can rest above the deck or sink
-into it: what it shows there, and why, is in
-[Terrain Precision Fix](https://github.com/lhervier/KSP-TerrainPrecisionFix), in
-[Real Solar System: the runway fix](https://github.com/lhervier/KSP-TerrainPrecisionFix/blob/main/docs/non-regression/real-solar-system/the-runway-fix.md).
-This mod only shows.
-
 **How this was made.** Written with Claude, Anthropic's AI assistant, and reviewed line by line by a
 human — me. I am saying so up front, because contributions made with an AI deserve a closer look than
 others, and because some people would rather stop reading here. That look is easy to give here: this
