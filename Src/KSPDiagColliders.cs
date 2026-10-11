@@ -16,9 +16,10 @@ namespace com.github.lhervier.ksp.diag.colliders
     /// but for the parts of the active vessel. By default what stands in front of the drawing hides it, so
     /// that a collider standing proud of a surface shows and one beneath it does not. The window switches
     /// between that, drawn through everything, and nothing, and lists the colliders drawn, each with its
-    /// colour and a box that stops drawing it. The log names each collider the first time it is drawn. A
-    /// button of the window also logs, under every loaded craft, each collider of the ground and the statics
-    /// a ray going straight down meets, with its height above the terrain the game computes there.
+    /// colour, whether it is off, convex or unreadable, and a box that stops drawing it. Nothing is written to
+    /// the log but on a button of the window, which logs, under every loaded craft, each collider of the ground
+    /// and the statics a ray going straight down meets, with its height above the terrain the game computes
+    /// there.
     /// </summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class KSPDiagColliders : MonoBehaviour
@@ -38,9 +39,6 @@ namespace com.github.lhervier.ksp.diag.colliders
 
         // How often the statics of the body are listed again, in seconds of real time.
         private const float SCAN_PERIOD = 2f;
-
-        // At most one line of log about the counts per this many seconds of real time.
-        private const float LOG_PERIOD = 1f;
 
         // Layer the drawing is queued on: Local Scenery, the layer of the terrain and of the statics,
         // which the flight cameras draw.
@@ -64,6 +62,13 @@ namespace com.github.lhervier.ksp.diag.colliders
             new Color(1f, 0.55f, 0.75f, 1f),  // pink
             new Color(0f, 0.6f, 0.45f, 1f),   // teal
         };
+
+        // Names of the colours of PALETTE, in the same order, and of the pale blue of a collider switched off.
+        private static readonly string[] PALETTE_NAMES =
+        {
+            "blue", "orange", "magenta", "cyan", "yellow", "red", "lime", "purple", "pink", "teal",
+        };
+        private const string DISABLED_NAME = "pale blue";
 
         // Height of the list of colliders in the window, in pixels, beyond which it scrolls.
         private const float LIST_HEIGHT = 300f;
@@ -115,9 +120,6 @@ namespace com.github.lhervier.ksp.diag.colliders
         // Every collider of the statics of the body, as last listed.
         private readonly List<Collider> staticColliders = new List<Collider>();
 
-        // Colliders already named in the log.
-        private readonly HashSet<Collider> described = new HashSet<Collider>();
-
         private float nextRefresh;
         private float nextScan;
 
@@ -125,12 +127,6 @@ namespace com.github.lhervier.ksp.diag.colliders
         private readonly HashSet<PQ> nearQuads = new HashSet<PQ>();
         private readonly HashSet<Collider> nearColliders = new HashSet<Collider>();
         private readonly List<Collider> found = new List<Collider>();
-
-        // What the last line of log said, to write a new one only when it changes.
-        private int loggedGround = -1;
-        private int loggedActive = -1;
-        private int loggedDisabled = -1;
-        private float nextLog;
 
         // How many colliders of statics are drawn, on and switched off, for the window.
         private int drawnActive;
@@ -165,10 +161,12 @@ namespace com.github.lhervier.ksp.diag.colliders
             ApplyDepthTest();
             windowRect = new Rect(Screen.width - WINDOW_WIDTH - WINDOW_MARGIN, WINDOW_MARGIN, WINDOW_WIDTH, 0f);
 
-            // Shader.Find answers with whatever carries the name: say what was found, and whether the depth
-            // test really is a property of it.
-            Debug.Log(LOG_PREFIX + "shader " + shader.name + ", depth test settable: "
-                + groundLine.HasProperty("_ZTest") + "; display: " + Describe(display));
+            // Shader.Find answers with whatever carries the name: without a depth test of its own, the
+            // three modes draw alike.
+            if (!groundLine.HasProperty("_ZTest"))
+            {
+                Debug.LogWarning(LOG_PREFIX + "shader " + shader.name + " has no _ZTest: every mode draws the same");
+            }
         }
 
         private void OnDestroy()
@@ -224,13 +222,6 @@ namespace com.github.lhervier.ksp.diag.colliders
             }
         }
 
-        private static string Describe(Display mode)
-        {
-            return mode == Display.DepthTested ? "colliders, hidden by what stands in front"
-                : mode == Display.ThroughEverything ? "colliders, through everything"
-                : "nothing";
-        }
-
         private void OnGUI()
         {
             if (!windowVisible)
@@ -244,7 +235,7 @@ namespace com.github.lhervier.ksp.diag.colliders
         private void DrawWindow(int id)
         {
             GUILayout.BeginVertical();
-            GUILayout.Label("Colliders within " + RADIUS.ToString("F0") + " m:");
+            GUILayout.Label(Heading() + ":");
             ChooseDisplay(GUILayout.SelectionGrid((int)display, DISPLAY_LABELS, 1));
             GUILayout.BeginHorizontal();
             // The name takes all the width the buttons leave, so that they stay at the right edge whatever
@@ -264,11 +255,9 @@ namespace com.github.lhervier.ksp.diag.colliders
             {
                 layer = chosenLayer;
                 nextRefresh = 0f;
-                Debug.Log(LOG_PREFIX + "layer: " + layer + " (" + LayerMask.LayerToName(layer) + ")");
             }
 
-            GUILayout.Label(ground.Count + " ground quad(s), " + drawnActive + " collider(s) on, "
-                + drawnDisabled + " switched off");
+            GUILayout.Label(Counts());
 
             listScroll = GUILayout.BeginScrollView(listScroll, GUILayout.Height(LIST_HEIGHT));
             foreach (ColliderOverlay overlay in listed)
@@ -282,12 +271,12 @@ namespace com.github.lhervier.ksp.diag.colliders
                 // A swatch of the colour the collider is drawn in.
                 Rect swatch = GUILayoutUtility.GetRect(16f, 16f, GUILayout.Width(16f), GUILayout.Height(16f));
                 Color previous = GUI.color;
-                GUI.color = collider.enabled ? PALETTE[overlay.ColorIndex] : DISABLED_LINE;
+                GUI.color = ColorOf(overlay);
                 GUI.DrawTexture(swatch, Texture2D.whiteTexture);
                 GUI.color = previous;
                 // Unticking a collider stops drawing it; it stays in the list so that it can be ticked again.
                 bool shown = !hidden.Contains(collider);
-                if (GUILayout.Toggle(shown, ShortName(collider) + (collider.enabled ? "" : " (off)")) != shown)
+                if (GUILayout.Toggle(shown, ShortName(collider) + Remarks(overlay)) != shown)
                 {
                     if (shown)
                     {
@@ -320,7 +309,7 @@ namespace com.github.lhervier.ksp.diag.colliders
         /// Writes to the log, for every loaded craft, every collider of the ground and the statics a ray
         /// fired straight down under it meets, nearest first: its name, its parent's, its height above the
         /// terrain the game computes there in millimetres, and whether its game object is active. Returns
-        /// the same, ready to be written as JSON.
+        /// the same, ready to be written as JSON, with the numbers rounded as the log writes them.
         /// </summary>
         internal List<object> LogUnderCrafts()
         {
@@ -348,7 +337,8 @@ namespace com.github.lhervier.ksp.diag.colliders
                 List<object> colliders = new List<object>();
                 foreach (RaycastHit hit in hits)
                 {
-                    double heightMm = (body.GetAltitude(hit.point) - terrain) * 1000.0;
+                    // Rounded as the log writes it, so that the JSON says no more than the log.
+                    double heightMm = System.Math.Round((body.GetAltitude(hit.point) - terrain) * 1000.0, 3);
                     Transform parent = hit.collider.transform.parent;
                     string parentName = parent != null ? parent.name : "";
                     bool active = hit.collider.gameObject.activeInHierarchy;
@@ -370,14 +360,104 @@ namespace com.github.lhervier.ksp.diag.colliders
                 crafts.Add(new Dictionary<string, object>
                 {
                     { "craft", vessel.vesselName },
-                    { "id", vessel.id.ToString() },
                     { "situation", vessel.situation.ToString() },
-                    { "latitude", lat },
-                    { "longitude", lon },
+                    { "latitude", System.Math.Round(lat, 6) },
+                    { "longitude", System.Math.Round(lon, 6) },
                     { "colliders", colliders }
                 });
             }
             return crafts;
+        }
+
+        /// <summary>
+        /// What the window shows, ready to be written as JSON: the body (empty when there is none), the
+        /// radius, the mode, the layer and its name, how many ground quads and colliders of statics are
+        /// drawn, and the list of the colliders, each with its name as listed, its colour, whether it is on,
+        /// convex or unreadable, and whether it is ticked.
+        /// </summary>
+        internal Dictionary<string, object> Read()
+        {
+            List<object> colliders = new List<object>();
+            foreach (ColliderOverlay overlay in listed)
+            {
+                Collider collider = overlay.Collider;
+                if (collider == null)
+                {
+                    continue;
+                }
+                colliders.Add(new Dictionary<string, object>
+                {
+                    { "name", ShortName(collider) },
+                    { "colour", ColorNameOf(overlay) },
+                    { "on", collider.enabled },
+                    { "convex", IsConvex(collider) },
+                    { "unreadable", IsUnreadable(overlay) },
+                    { "ticked", !hidden.Contains(collider) }
+                });
+            }
+            return new Dictionary<string, object>
+            {
+                { "body", sphere != null && body != null ? body.bodyName : "" },
+                { "radius", (double)RADIUS },
+                { "display", DISPLAY_LABELS[(int)display] },
+                { "layer", layer },
+                { "layerName", LayerMask.LayerToName(layer) },
+                { "groundQuads", ground.Count },
+                { "collidersOn", drawnActive },
+                { "collidersOff", drawnDisabled },
+                { "colliders", colliders }
+            };
+        }
+
+        /// <summary>The first line of the window: the radius, and the body when there is one.</summary>
+        private string Heading()
+        {
+            return "Colliders within " + RADIUS.ToString("F0") + " m"
+                + (sphere != null && body != null ? " on " + body.bodyName : "");
+        }
+
+        /// <summary>The line of the window that counts what is drawn.</summary>
+        private string Counts()
+        {
+            return ground.Count + " ground quad(s), " + drawnActive + " collider(s) on, " + drawnDisabled
+                + " switched off";
+        }
+
+        /// <summary>What the list of the window says after the name of the collider of
+        /// <paramref name="overlay"/>: whether it is off, and what is drawn of it otherwise than the physics
+        /// has it.</summary>
+        private static string Remarks(ColliderOverlay overlay)
+        {
+            return (overlay.Collider.enabled ? "" : " (off)")
+                + (IsConvex(overlay.Collider) ? " (convex)" : "")
+                + (IsUnreadable(overlay) ? " (unreadable mesh)" : "");
+        }
+
+        /// <summary>Whether <paramref name="collider"/> is a convex mesh: the physics uses its hull, not the
+        /// mesh drawn.</summary>
+        private static bool IsConvex(Collider collider)
+        {
+            MeshCollider meshCollider = collider as MeshCollider;
+            return meshCollider != null && meshCollider.convex;
+        }
+
+        /// <summary>Whether the mesh of the collider of <paramref name="overlay"/> cannot be read by scripts:
+        /// the box of its bounds is drawn instead.</summary>
+        private static bool IsUnreadable(ColliderOverlay overlay)
+        {
+            return overlay.Collider is MeshCollider && overlay.Unreadable;
+        }
+
+        /// <summary>The colour the collider of <paramref name="overlay"/> is drawn in.</summary>
+        private static Color ColorOf(ColliderOverlay overlay)
+        {
+            return overlay.Collider.enabled ? PALETTE[overlay.ColorIndex] : DISABLED_LINE;
+        }
+
+        /// <summary>The name of the colour the collider of <paramref name="overlay"/> is drawn in.</summary>
+        private static string ColorNameOf(ColliderOverlay overlay)
+        {
+            return overlay.Collider.enabled ? PALETTE_NAMES[overlay.ColorIndex] : DISABLED_NAME;
         }
 
         /// <summary>
@@ -395,7 +475,6 @@ namespace com.github.lhervier.ksp.diag.colliders
             {
                 display = chosen;
                 ApplyDepthTest();
-                Debug.Log(LOG_PREFIX + "display: " + Describe(display));
             }
             return DISPLAY_LABELS[index];
         }
@@ -454,8 +533,8 @@ namespace com.github.lhervier.ksp.diag.colliders
         }
 
         /// <summary>
-        /// Finds the colliders near the active vessel as they are now, brings the drawing in line with
-        /// them, and logs what has changed.
+        /// Finds the colliders near the active vessel as they are now, and brings the drawing and the
+        /// window in line with them.
         /// </summary>
         private void Refresh()
         {
@@ -466,11 +545,6 @@ namespace com.github.lhervier.ksp.diag.colliders
                 Clear();
                 sphere = current;
                 nextScan = 0f;
-                if (sphere != null)
-                {
-                    Debug.Log(LOG_PREFIX + "body " + body.bodyName + ", colliders drawn within "
-                        + RADIUS.ToString("F0") + " m of the active vessel");
-                }
             }
             Vessel vessel = FlightGlobals.ActiveVessel;
             if (sphere == null || sphere.quads == null || vessel == null)
@@ -486,7 +560,7 @@ namespace com.github.lhervier.ksp.diag.colliders
                 ScanStatics();
             }
             RefreshStatics(center, vessel);
-            LogIfChanged();
+            CountDrawn();
         }
 
         /// <summary>
@@ -630,10 +704,6 @@ namespace com.github.lhervier.ksp.diag.colliders
                     statics.Add(collider, overlay);
                 }
                 overlay.Refresh();
-                if (described.Add(collider))
-                {
-                    Debug.Log(LOG_PREFIX + DescribeCollider(overlay));
-                }
             }
 
             listed.Clear();
@@ -705,46 +775,6 @@ namespace com.github.lhervier.ksp.diag.colliders
             }
         }
 
-        /// <summary>One line naming the collider of <paramref name="overlay"/>: where it hangs, its kind,
-        /// whether it is on, and how far it stands from the active vessel.</summary>
-        private static string DescribeCollider(ColliderOverlay overlay)
-        {
-            Collider collider = overlay.Collider;
-            string line = "collider " + PathOf(collider.transform) + " (" + collider.GetType().Name
-                + (collider.enabled ? ", on" : ", switched off") + ", layer " + collider.gameObject.layer;
-            if (collider is MeshCollider meshCollider)
-            {
-                if (meshCollider.convex)
-                {
-                    line += ", convex: the physics uses its hull, not the mesh drawn";
-                }
-                if (overlay.Unreadable)
-                {
-                    line += ", mesh not readable: the box of its bounds is drawn";
-                }
-            }
-            line += ")";
-
-            Vessel vessel = FlightGlobals.ActiveVessel;
-            if (vessel != null && ColliderOverlay.Reach(collider, out Vector3 at, out float _))
-            {
-                line += ", centre " + Vector3.Distance(at, vessel.transform.position).ToString("F0")
-                    + " m from the active vessel";
-            }
-            return line;
-        }
-
-        /// <summary>The names of <paramref name="transform"/> and its parents, from the root down.</summary>
-        private static string PathOf(Transform transform)
-        {
-            string path = transform.name;
-            for (Transform parent = transform.parent; parent != null; parent = parent.parent)
-            {
-                path = parent.name + "/" + path;
-            }
-            return path;
-        }
-
         /// <summary>Drops every overlay.</summary>
         private void Clear()
         {
@@ -761,13 +791,10 @@ namespace com.github.lhervier.ksp.diag.colliders
             listed.Clear();
             hidden.Clear();
             staticColliders.Clear();
-            described.Clear();
-            loggedGround = -1;
         }
 
-        /// <summary>Writes one line of log with how many colliders are drawn, when that has changed since
-        /// the last one.</summary>
-        private void LogIfChanged()
+        /// <summary>Counts the colliders of statics drawn, on and switched off, for the window.</summary>
+        private void CountDrawn()
         {
             int active = 0;
             int disabled = 0;
@@ -784,17 +811,6 @@ namespace com.github.lhervier.ksp.diag.colliders
             }
             drawnActive = active;
             drawnDisabled = disabled;
-            if ((ground.Count == loggedGround && active == loggedActive && disabled == loggedDisabled)
-                || Time.unscaledTime < nextLog)
-            {
-                return;
-            }
-            Debug.Log(LOG_PREFIX + "drawn within " + RADIUS.ToString("F0") + " m: " + ground.Count
-                + " ground quad(s), " + active + " collider(s) of statics on, " + disabled + " switched off");
-            loggedGround = ground.Count;
-            loggedActive = active;
-            loggedDisabled = disabled;
-            nextLog = Time.unscaledTime + LOG_PERIOD;
         }
     }
 }

@@ -67,11 +67,13 @@ the colliders stay drawn.
 - **Three modes.** *Hidden by what stands in front*, the default: a collider standing proud of a surface
   shows, one beneath it does not. *Through everything*: every collider drawn on top of the scene, to see
   what lies under the deck of a runway or inside a building. *Off*.
-- **The layer**, with `<` and `>`, and its name.
+- **The body**, in the first line, and **the layer**, with `<` and `>`, and its name.
 - **How many** ground quads and colliders of statics are drawn, on and switched off.
 - **The list of the colliders drawn**, by the name of their parent and their own, each with a swatch of
-  its colour and `(off)` when it is switched off. Unticking one stops drawing it, to look at what it
-  hides; it stays in the list to be ticked again.
+  its colour, `(off)` when it is switched off, and `(convex)` or `(unreadable mesh)` when it is not drawn
+  as the physics has it (see [What it draws as it is not](#what-it-draws-as-it-is-not)). Unticking one
+  stops drawing it, to look at what it hides; it stays in the list to be ticked again.
+- **A button** that writes to the log, described in [The log](#the-log).
 
 The mode and the layer are kept from one flight to the next until KSP is closed; the unticked
 colliders, until the body or the scene changes.
@@ -83,29 +85,26 @@ mode.*
 
 ## What it draws as it is not
 
-- **A convex `MeshCollider`** is drawn as its mesh, while the physics uses its convex hull. The log says
-  which ones are convex.
-- **A mesh that scripts cannot read** is drawn as the box of its bounds. The log says which ones.
+- **A convex `MeshCollider`** is drawn as its mesh, while the physics uses its convex hull. The list
+  marks it `(convex)`.
+- **A mesh that scripts cannot read** is drawn as the box of its bounds. The list marks it
+  `(unreadable mesh)`.
 - **A sphere or a capsule under a scale that is not uniform** is drawn stretched, while the physics
   takes the largest scale.
 
-None of the 114 colliders of the stock space centre named in the log on the runway and around the SPH
+None of the 114 colliders of the stock space centre drawn on the runway and around the SPH
 is convex or unreadable.
 
 ## The log
 
-Every line starts with `[KSPDiagColliders]`. The mod writes:
+The mod writes to `KSP.log` only when the window's button *Log the colliders under each craft* is
+pressed, one line per loaded craft, starting with `[KSPDiagColliders]`: every collider of the ground and
+the statics that a ray fired straight down under the craft meets, nearest first, with the object it hangs
+from, its height above the terrain the game computes there, and whether it is active. On a runway, that
+tells the deck from the ground under it, and a section of the deck from another.
 
-- the shader it draws with, the body, and each change of mode or layer;
-- **each collider of statics, the first time it is drawn**: its full path in the hierarchy, its type,
-  whether it is on or switched off, its layer, whether it is convex or unreadable, and how far its centre
-  stands from the active craft — the drawing alone does not say which object is which colour;
-- at most once a second, when they change, how many ground quads and colliders of statics are drawn;
-- **on the window's button *Log the colliders under each craft***, one line per loaded craft: every
-  collider of the ground and the statics that a ray fired straight down under the craft meets, nearest
-  first, with the object it hangs from, its height above the terrain the game computes there, and whether
-  it is active. On a runway, that tells the deck from the ground under it, and a section of the deck from
-  another.
+Otherwise the log only receives an error if the shader the mod draws with cannot be found, and a warning
+if it cannot set its depth test.
 
 ## Get it
 
