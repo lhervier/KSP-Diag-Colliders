@@ -116,8 +116,8 @@ Drop `GameData/KSPDiagColliders` into the `GameData` of KSP, so that you end up 
 `GameData/KSPDiagColliders/KSPDiagColliders.dll`. It runs on a stock install:
 no Harmony, no ModuleManager, no dependency of any kind.
 
-The window is there in every flight. The mod reads the colliders and writes nothing but its lines in
-`KSP.log`; your saves are never touched. Removing the folder removes the mod.
+The window is there in every flight. The mod reads the colliders and writes nothing; your saves
+are never touched. Removing the folder removes the mod.
 
 ## License
 
