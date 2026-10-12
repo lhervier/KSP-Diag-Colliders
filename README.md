@@ -97,6 +97,19 @@ mode.*
 None of the 114 colliders of the stock space centre drawn on the runway and around the SPH
 is convex or unreadable.
 
+## Driving it by script
+
+With [KSP-MCPServer](https://github.com/lhervier/KSP-MCPServer) installed next to it, this mod offers
+its window to a program, as tools of that server: a script presses its buttons and reads what it shows,
+as a player would. Without the server, this mod runs the same.
+
+| tool | what it does |
+|---|---|
+| `colliders_read` | reads what the window shows, without writing anything: the body, the radius, the mode, the layer, how many ground quads and colliders of statics are drawn, on and switched off, and the list of the colliders, each with its colour and whether it is on, convex, unreadable and ticked |
+| `colliders_set_display` | chooses how the colliders are drawn, as the modes of the window do: `0` *Hidden by what stands in front*, `1` *Through everything*, `2` *Off* |
+| `colliders_move_window` | moves the window, as dragging it does: `x` and `y` in pixels from the top left corner of the screen; returns its position and size |
+| `colliders_show_window` | shows or hides the window, as `Alt+F6` does; the drawing goes on either way |
+
 ## Get it
 
 Either way you end up with the same `GameData/KSPDiagColliders/` folder.
@@ -105,9 +118,12 @@ Either way you end up with the same `GameData/KSPDiagColliders/` folder.
 [latest release](https://github.com/lhervier/KSP-Diag-Colliders/releases/latest).
 
 **Or compile it** — clone this repository, set `KSPDIR` to your KSP install folder and run
-`build.bat`. It needs the .NET SDK, takes a few seconds, reads the KSP assemblies straight from your
-install, and puts the DLL in `GameData/KSPDiagColliders/` inside the repository. It does
-not install anything. Worth doing if you would rather not run a binary you have no source for while
+`build.bat`. It needs the .NET SDK and
+[KSP-MCPServer](https://github.com/lhervier/KSP-MCPServer) installed in that KSP, takes a few seconds,
+reads the KSP assemblies straight from your install, and puts the DLL in
+`GameData/KSPDiagColliders/` inside the repository. It does not install anything.
+KSP-MCPServer is only needed to compile: it provides the attribute that marks what this mod offers to
+it, and this mod runs the same without it. Worth doing if you would rather not run a binary you have no source for while
 reporting what you saw.
 
 ## Install
