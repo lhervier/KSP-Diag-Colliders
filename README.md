@@ -73,10 +73,12 @@ the colliders stay drawn.
   its colour, `(off)` when it is switched off, and `(convex)` or `(unreadable mesh)` when it is not drawn
   as the physics has it (see [What it draws as it is not](#what-it-draws-as-it-is-not)). Unticking one
   stops drawing it, to look at what it hides; it stays in the list to be ticked again.
-- **A button** that writes to the log, described in [The log](#the-log).
 
 The mode and the layer are kept from one flight to the next until KSP is closed; the unticked
 colliders, until the body or the scene changes.
+
+The mod writes nothing to `KSP.log`, but an error if the shader it draws with cannot be found, and a
+warning if it cannot set its depth test.
 
 ![The runway of the space centre around a rover, the colliders of its sections drawn, the grey cells of the ground on the grass beside](imgs/runway.png)
 
@@ -94,17 +96,6 @@ mode.*
 
 None of the 114 colliders of the stock space centre drawn on the runway and around the SPH
 is convex or unreadable.
-
-## The log
-
-The mod writes to `KSP.log` only when the window's button *Log the colliders under each craft* is
-pressed, one line per loaded craft, starting with `[KSPDiagColliders]`: every collider of the ground and
-the statics that a ray fired straight down under the craft meets, nearest first, with the object it hangs
-from, its height above the terrain the game computes there, and whether it is active. On a runway, that
-tells the deck from the ground under it, and a section of the deck from another.
-
-Otherwise the log only receives an error if the shader the mod draws with cannot be found, and a warning
-if it cannot set its depth test.
 
 ## Get it
 

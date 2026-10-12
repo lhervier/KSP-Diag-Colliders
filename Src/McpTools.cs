@@ -6,8 +6,8 @@ using com.github.lhervier.ksp.mcpserver;
 namespace com.github.lhervier.ksp.diag.colliders
 {
     /// <summary>
-    /// What KSP-MCPServer, when it is installed, offers of this mod as tools: what its window shows, its
-    /// buttons and modes, and the moving of the window. Each tool returns no more than the window shows or
+    /// What KSP-MCPServer, when it is installed, offers of this mod as tools: what its window shows, its modes,
+    /// and the moving of the window. Each tool returns no more than the window shows or
     /// the log receives. Each method works on the mod loaded in the flight scene. Nothing here is needed to
     /// play by hand, and this mod runs the same without KSP-MCPServer: only that server reads the attribute.
     /// </summary>
@@ -23,17 +23,6 @@ namespace com.github.lhervier.ksp.diag.colliders
         internal static object Read()
         {
             return Mod().Read();
-        }
-
-        [McpTool("colliders_log_under_crafts",
-            "Presses Log the colliders under each craft in the window of KSP Diag - Colliders: for every loaded " +
-                "craft, its name (craft), situation, latitude and longitude, and every collider of the ground and " +
-                "the statics a ray fired straight down under it meets, nearest first, with its parent, its height " +
-                "above the terrain the game computes there (heightMm) and whether it is active. Written to KSP.log " +
-                "as well; the numbers are rounded as the log writes them.")]
-        internal static object LogUnderCrafts()
-        {
-            return Mod().LogUnderCrafts();
         }
 
         [McpTool("colliders_move_window",
