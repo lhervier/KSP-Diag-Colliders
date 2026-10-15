@@ -48,7 +48,8 @@ namespace com.github.lhervier.ksp.diag.colliders
         /// <summary>
         /// The matrix that puts a shape centred on <paramref name="localCenter"/>, in the frame of
         /// <paramref name="collider"/>'s transform, where the physics has the collider, rather than where
-        /// the game draws the object.
+        /// the game draws the object. For a mesh, <paramref name="localCenter"/> is the centre of the box of
+        /// the vertices its triangles use (see <see cref="UsedCenter"/>).
         /// </summary>
         /// <remarks>
         /// The game draws an object through its <c>localToWorldMatrix</c>, while the physics gets its pose
@@ -68,6 +69,56 @@ namespace com.github.lhervier.ksp.diag.colliders
             }
             Vector3 gap = collider.bounds.center - matrix.MultiplyPoint3x4(localCenter);
             return Matrix4x4.Translate(gap) * matrix;
+        }
+
+        /// <summary>
+        /// The centre of the box of the vertices that the triangles of <paramref name="triangles"/> use, in
+        /// the frame of the mesh: the centre the physics gives the bounds of a mesh collider, which leaves out
+        /// the vertices no triangle uses. The centre of the box of every vertex when there is no triangle.
+        /// </summary>
+        internal static Vector3 UsedCenter(Vector3[] vertices, IEnumerable<int[]> triangles)
+        {
+            // PhysX drops the vertices no triangle uses when it cooks a mesh, and so does its box: a terrain
+            // quad beside a coarser one skips every other vertex of that edge, and the box of all of them
+            // can be a metre off.
+            bool any = false;
+            Vector3 min = Vector3.zero;
+            Vector3 max = Vector3.zero;
+            foreach (int[] list in triangles)
+            {
+                foreach (int index in list)
+                {
+                    Vector3 v = vertices[index];
+                    if (!any)
+                    {
+                        min = max = v;
+                        any = true;
+                    }
+                    else
+                    {
+                        min = Vector3.Min(min, v);
+                        max = Vector3.Max(max, v);
+                    }
+                }
+            }
+            if (!any)
+            {
+                Bounds all = GeometryUtility.CalculateBounds(vertices, Matrix4x4.identity);
+                return all.center;
+            }
+            return 0.5f * (min + max);
+        }
+
+        /// <summary>The lists of triangles of the sub-meshes of <paramref name="shape"/> drawn as triangles.</summary>
+        internal static IEnumerable<int[]> TriangleLists(Mesh shape)
+        {
+            for (int sub = 0; sub < shape.subMeshCount; sub++)
+            {
+                if (shape.GetTopology(sub) == MeshTopology.Triangles)
+                {
+                    yield return shape.GetTriangles(sub);
+                }
+            }
         }
 
         /// <summary>Creates the overlay of <paramref name="collider"/>, with nothing drawn yet.</summary>
@@ -152,7 +203,6 @@ namespace com.github.lhervier.ksp.diag.colliders
                 default:
                     return;
             }
-            localCenter = shape != null ? shape.bounds.center : center;
             Bounds bounds = shape != null ? shape.bounds : default(Bounds);
             uint indexCount = shape != null ? IndexCount(shape) : 0;
             if (built && shape == builtMesh && center == builtCenter && size == builtSize
@@ -163,6 +213,9 @@ namespace com.github.lhervier.ksp.diag.colliders
 
             VERTICES.Clear();
             INDICES.Clear();
+            // A mesh that cannot be read gives the centre of its box: the vertices its triangles use are
+            // out of reach.
+            localCenter = shape != null ? shape.bounds.center : center;
             switch (Collider)
             {
                 case BoxCollider _:
@@ -185,6 +238,7 @@ namespace com.github.lhervier.ksp.diag.colliders
                     else
                     {
                         AddMeshEdges(shape);
+                        localCenter = UsedCenter(shape.vertices, TriangleLists(shape));
                     }
                     break;
             }

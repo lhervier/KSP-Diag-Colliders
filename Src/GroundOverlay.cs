@@ -26,6 +26,13 @@ namespace com.github.lhervier.ksp.diag.colliders
         private Vector3 builtFirstVertex;
         private Vector3 builtLastVertex;
 
+        // Stock gives the mesh other triangles, but not other vertices, when a neighbour changes level, and
+        // the vertices the triangles skip then move the box the physics has.
+        private PQS.EdgeState builtEdgeState;
+
+        // Centre, in the frame of the quad, of the box the physics has for the collider.
+        private Vector3 physicsCenter;
+
         /// <summary>Creates the overlay of <paramref name="quad"/>, with nothing drawn yet.</summary>
         public GroundOverlay(PQ quad)
         {
@@ -48,7 +55,8 @@ namespace com.github.lhervier.ksp.diag.colliders
             if (verts == builtVerts
                 && Quad.positionPlanetRelative == builtPosition
                 && verts[0].Equals(builtFirstVertex)
-                && verts[verts.Length - 1].Equals(builtLastVertex))
+                && verts[verts.Length - 1].Equals(builtLastVertex)
+                && Quad.edgeState == builtEdgeState)
             {
                 return;
             }
@@ -93,6 +101,10 @@ namespace com.github.lhervier.ksp.diag.colliders
             builtPosition = Quad.positionPlanetRelative;
             builtFirstVertex = verts[0];
             builtLastVertex = verts[verts.Length - 1];
+            builtEdgeState = Quad.edgeState;
+            physicsCenter = Quad.mesh != null
+                ? ColliderOverlay.UsedCenter(verts, ColliderOverlay.TriangleLists(Quad.mesh))
+                : Vector3.zero;
         }
 
         /// <summary>Queues the drawing for this frame, where the physics has the quad's collider now.</summary>
@@ -104,7 +116,7 @@ namespace com.github.lhervier.ksp.diag.colliders
             }
             MeshCollider collider = Quad.meshCollider;
             Matrix4x4 matrix = collider != null && collider.sharedMesh != null
-                ? ColliderOverlay.PhysicsMatrix(collider, collider.sharedMesh.bounds.center)
+                ? ColliderOverlay.PhysicsMatrix(collider, physicsCenter)
                 : Quad.transform.localToWorldMatrix;
             Graphics.DrawMesh(mesh, matrix, lines, layer);
         }

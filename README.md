@@ -52,7 +52,9 @@ the centre of the bounds the physics reports for it (`Collider.bounds`), with th
 its `Transform`. So a collider that the physics holds below the surface you see is drawn below it.
 
 This relies on the physics computing the bounds of a collider by transforming its local box, which keeps
-its centre. A collider switched off has no bounds: it is drawn where the game draws it.
+its centre. For a mesh, that box holds only the vertices its triangles use: the physics leaves the others
+out, and so does the mod. A terrain quad beside a coarser one is such a mesh, since it skips every other
+vertex along that edge. A collider switched off has no bounds: it is drawn where the game draws it.
 
 The drawing follows the colliders at every frame; which colliders are drawn is looked at again four
 times a second.
