@@ -40,6 +40,10 @@ namespace com.github.lhervier.ksp.diag.colliders
         private int builtDirection;
         private Bounds builtBounds;
         private uint builtIndexCount;
+        private PQS.EdgeState builtEdgeState;
+
+        // The terrain quad whose collider this is, or null.
+        private readonly PQ quad;
 
         // Centre of the shape in the frame of its transform: the point matched against the centre of the
         // bounds the physics gives.
@@ -125,6 +129,7 @@ namespace com.github.lhervier.ksp.diag.colliders
         public ColliderOverlay(Collider collider)
         {
             Collider = collider;
+            quad = collider.GetComponent<PQ>();
             mesh = new Mesh { name = "KSPDiagColliders collider " + collider.name };
         }
 
@@ -197,7 +202,8 @@ namespace com.github.lhervier.ksp.diag.colliders
                     // A mesh can be refilled in place: stock does so with the mesh of a terrain quad, built
                     // again elsewhere with as many vertices, or given other triangles where its neighbour
                     // changes level. Its vertex count, its bounds and its count of indices stand for its
-                    // content.
+                    // content, but for those other triangles: every list of them has as many indices, the
+                    // triangles left out being given as degenerate ones. The quad's edge state tells them.
                     size = new Vector3(shape.vertexCount, 0f, 0f);
                     break;
                 default:
@@ -205,8 +211,10 @@ namespace com.github.lhervier.ksp.diag.colliders
             }
             Bounds bounds = shape != null ? shape.bounds : default(Bounds);
             uint indexCount = shape != null ? IndexCount(shape) : 0;
+            PQS.EdgeState edgeState = quad != null ? quad.edgeState : PQS.EdgeState.Reset;
             if (built && shape == builtMesh && center == builtCenter && size == builtSize
-                && direction == builtDirection && bounds == builtBounds && indexCount == builtIndexCount)
+                && direction == builtDirection && bounds == builtBounds && indexCount == builtIndexCount
+                && edgeState == builtEdgeState)
             {
                 return;
             }
@@ -266,6 +274,7 @@ namespace com.github.lhervier.ksp.diag.colliders
             builtDirection = direction;
             builtBounds = bounds;
             builtIndexCount = indexCount;
+            builtEdgeState = edgeState;
         }
 
         /// <summary>How many indices the sub-meshes of <paramref name="shape"/> hold, all together.</summary>
