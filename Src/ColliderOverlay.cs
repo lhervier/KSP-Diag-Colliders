@@ -4,10 +4,10 @@ using UnityEngine;
 namespace com.github.lhervier.ksp.diag.colliders
 {
     /// <summary>
-    /// The drawing of one collider of a static, as lines: the edges of a box, three circles for a sphere,
-    /// the outline of a capsule, every edge of the triangles of a mesh. It is built in the frame of the
-    /// collider's own transform and drawn where the physics puts the collider, which is not always where
-    /// the game draws the object (see <see cref="PhysicsMatrix"/>).
+    /// The drawing of one collider, of a static or of a terrain quad, as lines: the edges of a box, three
+    /// circles for a sphere, the outline of a capsule, every edge of the triangles of a mesh. It is built in
+    /// the frame of the collider's own transform and drawn where the physics puts the collider, which is
+    /// not always where the game draws the object (see <see cref="PhysicsMatrix"/>).
     /// </summary>
     internal sealed class ColliderOverlay
     {
@@ -38,6 +38,8 @@ namespace com.github.lhervier.ksp.diag.colliders
         private Vector3 builtCenter;
         private Vector3 builtSize;
         private int builtDirection;
+        private Bounds builtBounds;
+        private uint builtIndexCount;
 
         // Centre of the shape in the frame of its transform: the point matched against the centre of the
         // bounds the physics gives.
@@ -141,15 +143,20 @@ namespace com.github.lhervier.ksp.diag.colliders
                     {
                         return;
                     }
-                    // A mesh can be refilled in place: its vertex count stands for its content.
+                    // A mesh can be refilled in place: stock does so with the mesh of a terrain quad, built
+                    // again elsewhere with as many vertices, or given other triangles where its neighbour
+                    // changes level. Its vertex count, its bounds and its count of indices stand for its
+                    // content.
                     size = new Vector3(shape.vertexCount, 0f, 0f);
                     break;
                 default:
                     return;
             }
             localCenter = shape != null ? shape.bounds.center : center;
+            Bounds bounds = shape != null ? shape.bounds : default(Bounds);
+            uint indexCount = shape != null ? IndexCount(shape) : 0;
             if (built && shape == builtMesh && center == builtCenter && size == builtSize
-                && direction == builtDirection)
+                && direction == builtDirection && bounds == builtBounds && indexCount == builtIndexCount)
             {
                 return;
             }
@@ -203,6 +210,19 @@ namespace com.github.lhervier.ksp.diag.colliders
             builtCenter = center;
             builtSize = size;
             builtDirection = direction;
+            builtBounds = bounds;
+            builtIndexCount = indexCount;
+        }
+
+        /// <summary>How many indices the sub-meshes of <paramref name="shape"/> hold, all together.</summary>
+        private static uint IndexCount(Mesh shape)
+        {
+            uint count = 0;
+            for (int sub = 0; sub < shape.subMeshCount; sub++)
+            {
+                count += shape.GetIndexCount(sub);
+            }
+            return count;
         }
 
         private static void AddSegment(Vector3 a, Vector3 b)

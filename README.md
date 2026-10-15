@@ -3,9 +3,9 @@
 **⚠️ Work in progress.** This is an active investigation, not a finished mod. The code and this page can still change, and several questions are still open.
 
 A viewing instrument for KSP 1.12. In flight, it draws the colliders within 300 m of the active craft —
-what a craft can actually rest on: the ground, as the grey outline of its cells, and the colliders of
-the statics (the buildings and runway of the space centre, Kerbal Konstructs groups), each in a colour of
-its own. It draws them where the physics has them, which is not always where the game draws the surface
+what a craft can actually rest on: the ground, as the grey outline of its cells and the triangles of
+each terrain quad, and the colliders of the statics (the buildings and runway of the space centre,
+Kerbal Konstructs groups), each in a colour of its own. It draws them where the physics has them, which is not always where the game draws the surface
 you see. A small window chooses how they are drawn and lists them by name.
 
 **How this was made.** Written with Claude, Anthropic's AI assistant, and reviewed line by line by a
@@ -21,9 +21,11 @@ about a thousand lines with no dependency of any kind.
 *Stock KSP 1.12.5 with KSP Community Fixes: a rover driven from the runway to the grass beside the SPH,
 the window in its default mode.*
 
-**The ground.** A terrain quad is its own collider: stock gives it its mesh as collider. So the
-grey cells drawn over the terrain are the collider of the ground itself, outlined only, with no fill and
-no diagonals, so that the terrain they stand for stays in sight. Every quad whose collider is on is
+**The ground.** A terrain quad is its own collider: stock gives it its mesh as collider. The ground is
+drawn twice over. The grey cells are the outline of the grid of each quad, with no fill and no
+diagonals, so that the terrain they stand for stays in sight. Over them, each quad's collider is drawn
+like those of the statics: every edge of its triangles, diagonals included, in a colour of its own, and
+listed in the window, where unticking it leaves the grey cells alone. Every quad whose collider is on is
 drawn, whatever its subdivision level.
 
 **The statics.** Every collider under a `PQSCity` or a `PQSCity2` of the body: the buildings, the runway
@@ -36,7 +38,7 @@ finds them by walking the statics.
 **One layer.** The colliders of the statics are on layer 15, *Local Scenery*, the layer of the terrain,
 and that is the one drawn by default. The window can choose any other: the mod then draws the colliders
 of the statics on that layer, and any other collider of that layer that is on — but never the parts of
-the active craft. The grey ground is drawn whatever the layer.
+the active craft. The ground, cells and triangles, is drawn whatever the layer.
 
 Not drawn: triggers, which hold nothing up, and colliders in an object switched off (the other levels of
 an upgradeable building, the ruins of an intact one), which are nowhere in the world.
@@ -68,8 +70,9 @@ the colliders stay drawn.
   shows, one beneath it does not. *Through everything*: every collider drawn on top of the scene, to see
   what lies under the deck of a runway or inside a building. *Off*.
 - **The body**, in the first line, and **the layer**, with `<` and `>`, and its name.
-- **How many** ground quads and colliders of statics are drawn, on and switched off.
-- **The list of the colliders drawn**, by the name of their parent and their own, each with a swatch of
+- **How many** ground quads and colliders in colour are drawn, on and switched off.
+- **The list of the colliders drawn**, by the name of their parent and their own (a terrain quad by its
+  own name, marked `(ground, level` *n*`)` with its subdivision level), each with a swatch of
   its colour, `(off)` when it is switched off, and `(convex)` or `(unreadable mesh)` when it is not drawn
   as the physics has it (see [What it draws as it is not](#what-it-draws-as-it-is-not)). Unticking one
   stops drawing it, to look at what it hides; it stays in the list to be ticked again.
@@ -105,7 +108,7 @@ as a player would. Without the server, this mod runs the same.
 
 | tool | what it does |
 |---|---|
-| `colliders_read` | reads what the window shows, without writing anything: the body, the radius, the mode, the layer, how many ground quads and colliders of statics are drawn, on and switched off, and the list of the colliders, each with its colour and whether it is on, convex, unreadable and ticked |
+| `colliders_read` | reads what the window shows, without writing anything: the body, the radius, the mode, the layer, how many ground quads and colliders in colour are drawn, on and switched off, and the list of the colliders, those of the ground included, each with its colour, whether it is on, convex, unreadable and ticked, and the level of its quad for the ground |
 | `colliders_set_display` | chooses how the colliders are drawn, as the modes of the window do: `0` *Hidden by what stands in front*, `1` *Through everything*, `2` *Off* |
 | `colliders_move_window` | moves the window, as dragging it does: `x` and `y` in pixels from the top left corner of the screen; returns its position and size |
 | `colliders_show_window` | shows or hides the window, as `Alt+F6` does; the drawing goes on either way |

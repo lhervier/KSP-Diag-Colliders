@@ -7,11 +7,12 @@ namespace com.github.lhervier.ksp.diag.colliders
     /// <summary>
     /// Collider viewer. In flight, draws the colliders within a few hundred metres of the active vessel:
     /// those of the ground (stock gives a terrain quad its own mesh as collider) as the grey outline of
-    /// their cells, and those of one layer, chosen in a small window (Local Scenery, the layer of the
-    /// statics, by default), as lines of a colour of their own: the colliders of the statics on that layer
-    /// (anything placed by a PQSCity or a PQSCity2: the buildings and runway of the space centre, Kerbal
-    /// Konstructs groups), pale blue when switched off, and any other collider of that layer that is on,
-    /// but for the parts of the active vessel. By default what stands in front of the drawing hides it, so
+    /// their cells and, as lines of a colour of their own, the edges of their triangles and the colliders of
+    /// one layer, chosen in a small window (Local Scenery, the layer of the statics, by default): the
+    /// colliders of the statics on that layer (anything placed by a PQSCity or a PQSCity2: the buildings and
+    /// runway of the space centre, Kerbal Konstructs groups), pale blue when switched off, and any other
+    /// collider of that layer that is on, but for the parts of the active vessel. By default what stands in
+    /// front of the drawing hides it, so
     /// that a collider standing proud of a surface shows and one beneath it does not. The window switches
     /// between that, drawn through everything, and nothing, and lists the colliders drawn, each with its
     /// colour, whether it is off, convex or unreadable, and a box that stops drawing it. Nothing is written to
@@ -111,7 +112,9 @@ namespace com.github.lhervier.ksp.diag.colliders
         private CelestialBody body;
         private PQS sphere;
         private readonly Dictionary<PQ, GroundOverlay> ground = new Dictionary<PQ, GroundOverlay>();
-        private readonly Dictionary<Collider, ColliderOverlay> statics = new Dictionary<Collider, ColliderOverlay>();
+        // The colliders drawn in colour: those of the ground quads, whatever the layer, and those of the
+        // chosen layer.
+        private readonly Dictionary<Collider, ColliderOverlay> overlays = new Dictionary<Collider, ColliderOverlay>();
 
         // Every collider of the statics of the body, as last listed.
         private readonly List<Collider> staticColliders = new List<Collider>();
@@ -124,13 +127,13 @@ namespace com.github.lhervier.ksp.diag.colliders
         private readonly HashSet<Collider> nearColliders = new HashSet<Collider>();
         private readonly List<Collider> found = new List<Collider>();
 
-        // How many colliders of statics are drawn, on and switched off, for the window.
+        // How many colliders are drawn in colour, on and switched off, for the window.
         private int drawnActive;
         private int drawnDisabled;
 
         private Rect windowRect;
 
-        // The colliders of statics drawn, in the order of the window's list, and where that list is
+        // The colliders drawn in colour, in the order of the window's list, and where that list is
         // scrolled to.
         private readonly List<ColliderOverlay> listed = new List<ColliderOverlay>();
         private Vector2 listScroll;
@@ -292,9 +295,9 @@ namespace com.github.lhervier.ksp.diag.colliders
 
         /// <summary>
         /// What the window shows, ready to be written as JSON: the body (empty when there is none), the
-        /// radius, the mode, the layer and its name, how many ground quads and colliders of statics are
+        /// radius, the mode, the layer and its name, how many ground quads and colliders in colour are
         /// drawn, and the list of the colliders, each with its name as listed, its colour, whether it is on,
-        /// convex or unreadable, and whether it is ticked.
+        /// convex or unreadable, the level of its quad when it is ground, and whether it is ticked.
         /// </summary>
         internal Dictionary<string, object> Read()
         {
@@ -306,7 +309,7 @@ namespace com.github.lhervier.ksp.diag.colliders
                 {
                     continue;
                 }
-                colliders.Add(new Dictionary<string, object>
+                Dictionary<string, object> line = new Dictionary<string, object>
                 {
                     { "name", ShortName(collider) },
                     { "colour", ColorNameOf(overlay) },
@@ -314,7 +317,13 @@ namespace com.github.lhervier.ksp.diag.colliders
                     { "convex", IsConvex(collider) },
                     { "unreadable", IsUnreadable(overlay) },
                     { "ticked", !hidden.Contains(collider) }
-                });
+                };
+                PQ quad = QuadOf(collider);
+                if (quad != null)
+                {
+                    line.Add("groundLevel", quad.subdivision);
+                }
+                colliders.Add(line);
             }
             return new Dictionary<string, object>
             {
@@ -345,13 +354,22 @@ namespace com.github.lhervier.ksp.diag.colliders
         }
 
         /// <summary>What the list of the window says after the name of the collider of
-        /// <paramref name="overlay"/>: whether it is off, and what is drawn of it otherwise than the physics
-        /// has it.</summary>
+        /// <paramref name="overlay"/>: the level of its quad when it is ground, whether it is off, and what is
+        /// drawn of it otherwise than the physics has it.</summary>
         private static string Remarks(ColliderOverlay overlay)
         {
-            return (overlay.Collider.enabled ? "" : " (off)")
+            PQ quad = QuadOf(overlay.Collider);
+            return (quad != null ? " (ground, level " + quad.subdivision + ")" : "")
+                + (overlay.Collider.enabled ? "" : " (off)")
                 + (IsConvex(overlay.Collider) ? " (convex)" : "")
                 + (IsUnreadable(overlay) ? " (unreadable mesh)" : "");
+        }
+
+        /// <summary>The terrain quad whose collider <paramref name="collider"/> is, or null when it is not
+        /// ground.</summary>
+        private static PQ QuadOf(Collider collider)
+        {
+            return collider != null ? collider.GetComponent<PQ>() : null;
         }
 
         /// <summary>Whether <paramref name="collider"/> is a convex mesh: the physics uses its hull, not the
@@ -443,7 +461,7 @@ namespace com.github.lhervier.ksp.diag.colliders
             {
                 overlay.Draw(groundLine, DRAW_LAYER);
             }
-            foreach (ColliderOverlay overlay in statics.Values)
+            foreach (ColliderOverlay overlay in overlays.Values)
             {
                 Collider collider = overlay.Collider;
                 if (collider != null && !hidden.Contains(collider))
@@ -480,7 +498,7 @@ namespace com.github.lhervier.ksp.diag.colliders
                 nextScan = Time.unscaledTime + SCAN_PERIOD;
                 ScanStatics();
             }
-            RefreshStatics(center, vessel);
+            RefreshColliders(center, vessel);
             CountDrawn();
         }
 
@@ -574,12 +592,13 @@ namespace com.github.lhervier.ksp.diag.colliders
         }
 
         /// <summary>
-        /// Makes <see cref="statics"/> hold one overlay per collider of the chosen layer that comes within
-        /// <see cref="RADIUS"/> of <paramref name="center"/>, and nothing else: the colliders of the
-        /// statics of that layer, the ones switched off included, and any other collider of that layer
-        /// that is on, but for the terrain, drawn apart, and the parts of <paramref name="vessel"/>.
+        /// Makes <see cref="overlays"/> hold one overlay per collider that comes within <see cref="RADIUS"/>
+        /// of <paramref name="center"/> and is drawn in colour, and nothing else: the colliders of the quads
+        /// in <see cref="nearQuads"/>, whatever the layer, the colliders of the statics of the chosen layer,
+        /// the ones switched off included, and any other collider of that layer that is on, but for the parts
+        /// of <paramref name="vessel"/>.
         /// </summary>
-        private void RefreshStatics(Vector3 center, Vessel vessel)
+        private void RefreshColliders(Vector3 center, Vessel vessel)
         {
             nearColliders.Clear();
             foreach (Collider collider in staticColliders)
@@ -597,8 +616,15 @@ namespace com.github.lhervier.ksp.diag.colliders
                 }
             }
 
+            // The ground, whatever the layer, as for the grey outline of its cells: the quads near enough
+            // were just collected.
+            foreach (PQ quad in nearQuads)
+            {
+                nearColliders.Add(quad.meshCollider);
+            }
+
             // Whatever else the physics has on that layer, though only what is on: a Physics query does
-            // not see a collider switched off.
+            // not see a collider switched off. The quads were taken above.
             foreach (Collider collider in Physics.OverlapSphere(center, RADIUS, 1 << layer, QueryTriggerInteraction.Ignore))
             {
                 if (nearColliders.Contains(collider) || collider.GetComponent<PQ>() != null)
@@ -616,19 +642,19 @@ namespace com.github.lhervier.ksp.diag.colliders
                 }
             }
 
-            RemoveMissing(statics, nearColliders, overlay => overlay.Destroy());
+            RemoveMissing(overlays, nearColliders, overlay => overlay.Destroy());
             foreach (Collider collider in nearColliders)
             {
-                if (!statics.TryGetValue(collider, out ColliderOverlay overlay))
+                if (!overlays.TryGetValue(collider, out ColliderOverlay overlay))
                 {
                     overlay = new ColliderOverlay(collider) { ColorIndex = LeastUsedColor() };
-                    statics.Add(collider, overlay);
+                    overlays.Add(collider, overlay);
                 }
                 overlay.Refresh();
             }
 
             listed.Clear();
-            listed.AddRange(statics.Values);
+            listed.AddRange(overlays.Values);
             listed.Sort((a, b) => string.CompareOrdinal(ShortName(a.Collider), ShortName(b.Collider)));
         }
 
@@ -645,7 +671,7 @@ namespace com.github.lhervier.ksp.diag.colliders
         private int LeastUsedColor()
         {
             int[] uses = new int[PALETTE.Length];
-            foreach (ColliderOverlay overlay in statics.Values)
+            foreach (ColliderOverlay overlay in overlays.Values)
             {
                 uses[overlay.ColorIndex]++;
             }
@@ -661,12 +687,17 @@ namespace com.github.lhervier.ksp.diag.colliders
         }
 
         /// <summary>The name of the collider's object after that of its parent, which often tells apart
-        /// objects of the same name.</summary>
+        /// objects of the same name; the name of the quad alone for the ground.</summary>
         private static string ShortName(Collider collider)
         {
             if (collider == null)
             {
                 return "";
+            }
+            // Every quad has the same parent, and its own name already says the body.
+            if (QuadOf(collider) != null)
+            {
+                return collider.name;
             }
             Transform parent = collider.transform.parent;
             return (parent != null ? parent.name + "/" : "") + collider.name;
@@ -703,23 +734,23 @@ namespace com.github.lhervier.ksp.diag.colliders
             {
                 overlay.Destroy();
             }
-            foreach (ColliderOverlay overlay in statics.Values)
+            foreach (ColliderOverlay overlay in overlays.Values)
             {
                 overlay.Destroy();
             }
             ground.Clear();
-            statics.Clear();
+            overlays.Clear();
             listed.Clear();
             hidden.Clear();
             staticColliders.Clear();
         }
 
-        /// <summary>Counts the colliders of statics drawn, on and switched off, for the window.</summary>
+        /// <summary>Counts the colliders drawn in colour, on and switched off, for the window.</summary>
         private void CountDrawn()
         {
             int active = 0;
             int disabled = 0;
-            foreach (Collider collider in statics.Keys)
+            foreach (Collider collider in overlays.Keys)
             {
                 if (collider != null && collider.enabled)
                 {
