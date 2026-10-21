@@ -104,7 +104,7 @@ is convex or unreadable.
 
 ## Driving it by script
 
-With [KSP-MCPServer](https://github.com/lhervier/KSP-MCPServer) installed next to it, this mod offers
+With [KSP-Util-MCPServer](https://github.com/lhervier/KSP-Util-MCPServer) installed next to it, this mod offers
 its window to a program, as tools of that server: a script presses its buttons and reads what it shows,
 as a player would. Without the server, this mod runs the same.
 
@@ -124,10 +124,10 @@ Either way you end up with the same `GameData/KSPDiagColliders/` folder.
 
 **Or compile it** — clone this repository, set `KSPDIR` to your KSP install folder and run
 `build.bat`. It needs the .NET SDK and
-[KSP-MCPServer](https://github.com/lhervier/KSP-MCPServer) installed in that KSP, takes a few seconds,
+[KSP-Util-MCPServer](https://github.com/lhervier/KSP-Util-MCPServer) installed in that KSP, takes a few seconds,
 reads the KSP assemblies straight from your install, and puts the DLL in
 `GameData/KSPDiagColliders/` inside the repository. It does not install anything.
-KSP-MCPServer is only needed to compile: it provides the attribute that marks what this mod offers to
+KSP-Util-MCPServer is only needed to compile: it provides the attribute that marks what this mod offers to
 it, and this mod runs the same without it. Worth doing if you would rather not run a binary you have no source for while
 reporting what you saw.
 
