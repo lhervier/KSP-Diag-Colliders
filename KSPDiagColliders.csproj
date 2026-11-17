@@ -3,6 +3,8 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>KSPDiagColliders</AssemblyName>
     <RootNamespace>com.github.lhervier.ksp.diag.colliders</RootNamespace>
+    <Version>0.1.1-dev</Version>
+    <Description>Draws the colliders of the ground and of the statics around the active vessel</Description>
     <OutputType>Library</OutputType>
     <OutputPath>Output\bin</OutputPath>
     <IntermediateOutputPath>Output\obj</IntermediateOutputPath>
@@ -10,8 +12,6 @@
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Deterministic>false</Deterministic>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3">
