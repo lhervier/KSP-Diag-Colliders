@@ -14,13 +14,9 @@ namespace com.github.lhervier.ksp.diag.colliders
     internal static class McpTools
     {
         [McpTool("colliders_read",
-            "Reads what the window of KSP Diag - Colliders shows, without writing anything: the body (empty when " +
-                "there is none), the radius in metres, the display mode, the layer and its name (layerName), how many " +
-                "ground quads (groundQuads) and colliders in colour on (collidersOn) and switched off (collidersOff) " +
-                "are drawn, and the list of the colliders in colour (colliders), those of the ground quads included, " +
-                "each with its name as listed (parent/name, the quad's name for the ground), its colour, whether it is on, convex (the physics uses " +
-                "its hull) or unreadable (the box of its bounds is drawn), the level of its quad when it is ground " +
-                "(groundLevel), and whether it is ticked.")]
+            "Reads what the window of KSP Diag - Colliders shows: body, radius, display mode, layer, counts of " +
+            "ground quads and colliders on and off, and each collider drawn in colour (name, colour, on, convex, " +
+            "unreadable, groundLevel, ticked).")]
         internal static object Read()
         {
             return Mod().Read();
